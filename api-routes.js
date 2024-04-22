@@ -27,4 +27,7 @@ router.route('/usuarios/incrementarPuntos/findbyid/:usuario_id')
 router.route('/usuarios/incrementarPuntos/')
     .post(playalmiController.incrementarPuntuacionGeneral)
 
+router.route('/partidas/guardarPartida')
+    .post(playalmiController.guardarPartida)
+
 module.exports = router;

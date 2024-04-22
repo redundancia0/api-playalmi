@@ -1,7 +1,8 @@
 const { model } = require('mongoose');
-Usuarios = require('./playalmiModel');
+Usuarios = require('./playalmiModel').Usuarios;
+Partidas = require('./playalmiModel').Partidas;
 
-exports.index = function(req, res) {
+exports.index = function(req, res) {        
     Usuarios.get().then((usuario) => {
         res.json({
             status: "success",
@@ -34,6 +35,39 @@ exports.new = function(req, res) {
             error: err.message
         });
     });
+};
+
+
+exports.guardarPartida = function(req, res) {
+    const { usuario_id, puntuacion } = req.body;
+
+    if (!usuario_id || !puntuacion) {
+        return res.status(400).json({
+            status: "error",
+            message: "Se deben proporcionar el ID del usuario y el puntuacion de la partida"
+        });
+    }
+
+    const nuevaPartida = new Partidas({
+        usuario_id: usuario_id,
+        puntuacion: puntuacion
+    });
+
+    nuevaPartida.save()
+        .then(partidaGuardada => {
+            res.json({
+                status: "success",
+                message: "Partida guardada exitosamente",
+                data: partidaGuardada
+            });
+        })
+        .catch(error => {
+            res.status(500).json({
+                status: "error",
+                message: "Error al guardar la partida",
+                error: error.message
+            });
+        });
 };
 
 exports.view = function(req, res)
@@ -80,7 +114,8 @@ exports.topUsers = function(req, res) {
 };
 
 
-exports.incrementarPuntuacionUsuario = function(req, res) {
+exports.incrementarPuntuacionUsuario
+ = function(req, res) {
     const usuarioId = req.params.usuario_id;
     const puntosParaIncrementar = req.body.puntos;
 

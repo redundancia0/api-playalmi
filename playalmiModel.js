@@ -15,13 +15,31 @@ const usuarioSchema = mongoose.Schema({
     }
 }, { collection: 'usuarios' });
 
-var Usuarios = mongoose.model('usuarios', usuarioSchema);
+const Usuarios = mongoose.model('usuarios', usuarioSchema);
 
-module.exports = Usuarios;
-
-var Usuarios = module.exports = mongoose.model('usuarios', usuarioSchema)
-
-module.exports.get = function()
-{
+Usuarios.get = function() {
     return Usuarios.find().exec();
 }
+
+module.exports.Usuarios = Usuarios;
+
+const partidaSchema = mongoose.Schema({
+    usuario_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'usuarios',
+        required: true
+    },
+    puntuacion: {
+        type: Number,
+        default: 0,
+        required: true
+    },
+    fecha: {
+        type: Date,
+        default: Date.now
+    }
+}, { collection: 'partidas' });
+
+const Partidas = mongoose.model('partidas', partidaSchema);
+
+module.exports.Partidas = Partidas;
