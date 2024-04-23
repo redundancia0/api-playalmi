@@ -20,11 +20,11 @@ exports.index = function(req, res) {
         });
     });
 };
+
 //REVISADO
 exports.new = function(req, res) {
     var usuario = new Usuarios();
     usuario.nombre = req.body.nombre;
-    // Hashear la contraseña antes de guardarla
     bcrypt.hash(req.body.clave, 10, function(err, hash) {
         if (err) {
             return res.status(500).json({
@@ -32,7 +32,7 @@ exports.new = function(req, res) {
                 error: err.message
             });
         }
-        usuario.clave = hash; // Guardar el hash en lugar de la contraseña sin hashear
+        usuario.clave = hash;
         usuario.monedasTotal = 0;
         usuario.puntuacionTotal = 0;
 
@@ -49,28 +49,6 @@ exports.new = function(req, res) {
         });
     });
 };
-
-/*exports.new = function(req, res) {
-    var usuario = new Usuarios();
-    usuario.nombre = req.body.nombre;
-    usuario.clave = req.body.clave; 
-    usuario.monedasTotal = 0;
-    usuario.puntuacionTotal = 0;
-
-    usuario.save().then(function(usuario) {
-        res.json({
-            message: "Nuevo usuario creado",
-            data: usuario
-        });
-    }).catch(function(err) {
-        res.status(500).json({
-            message: "Error al crear nuevo usuario",
-            error: err.message
-        });
-    });
-};
-*/
-
 
 exports.insertarPartida = function(req, res) {
     const { usuario_id, puntuacion, monedas } = req.body;
@@ -216,7 +194,6 @@ exports.update = function(req, res) {
     Usuarios.findById(req.params.usuario_id).then(function(usuario) {
         usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
 
-        // Hashear la clave solo si se proporciona en la solicitud
         if (req.body.clave) {
             bcrypt.hash(req.body.clave, 10, function(err, hash) {
                 if (err) {
@@ -225,11 +202,10 @@ exports.update = function(req, res) {
                         error: err.message
                     });
                 }
-                usuario.clave = hash; // Guardar el hash en lugar de la contraseña sin hashear
+                usuario.clave = hash; 
                 guardarUsuario(usuario, res);
             });
         } else {
-            // Si no se proporciona la clave, guardamos el usuario sin modificarla
             guardarUsuario(usuario, res);
         }
     });
