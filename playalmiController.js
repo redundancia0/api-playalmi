@@ -1,3 +1,6 @@
+
+const bcrypt = require('bcrypt');
+
 const { model } = require('mongoose');
 Usuarios = require('./playalmiModel').Usuarios;
 Partidas = require('./playalmiModel').Partidas;
@@ -17,12 +20,42 @@ exports.index = function(req, res) {
         });
     });
 };
-
+//REVISADO
 exports.new = function(req, res) {
     var usuario = new Usuarios();
     usuario.nombre = req.body.nombre;
-    usuario.clave = req.body.clave;
-    usuario.puntuacion = 0;
+    // Hashear la contraseña antes de guardarla
+    bcrypt.hash(req.body.clave, 10, function(err, hash) {
+        if (err) {
+            return res.status(500).json({
+                message: "Error al hashear la contraseña",
+                error: err.message
+            });
+        }
+        usuario.clave = hash; // Guardar el hash en lugar de la contraseña sin hashear
+        usuario.monedasTotal = 0;
+        usuario.puntuacionTotal = 0;
+
+        usuario.save().then(function(usuario) {
+            res.json({
+                message: "Nuevo usuario creado",
+                data: usuario
+            });
+        }).catch(function(err) {
+            res.status(500).json({
+                message: "Error al crear nuevo usuario",
+                error: err.message
+            });
+        });
+    });
+};
+
+/*exports.new = function(req, res) {
+    var usuario = new Usuarios();
+    usuario.nombre = req.body.nombre;
+    usuario.clave = req.body.clave; 
+    usuario.monedasTotal = 0;
+    usuario.puntuacionTotal = 0;
 
     usuario.save().then(function(usuario) {
         res.json({
@@ -36,21 +69,24 @@ exports.new = function(req, res) {
         });
     });
 };
+*/
 
 
-exports.guardarPartida = function(req, res) {
-    const { usuario_id, puntuacion } = req.body;
+exports.insertarPartida = function(req, res) {
+    const { usuario_id, puntuacion, monedas } = req.body;
 
     if (!usuario_id || !puntuacion) {
         return res.status(400).json({
             status: "error",
-            message: "Se deben proporcionar el ID del usuario y el puntuacion de la partida"
+            message: "Se deben proporcionar el ID del usuario y el puntuacionTotal de la partida"
         });
     }
 
     const nuevaPartida = new Partidas({
         usuario_id: usuario_id,
-        puntuacion: puntuacion
+        puntuacion: puntuacion,
+        monedas: monedas,
+        fecha: Date.now()
     });
 
     nuevaPartida.save()
@@ -94,14 +130,14 @@ exports.delete = function(req, res)
 }
 
 exports.topUsers = function(req, res) {
-    Usuarios.find()
+    Partidas.find()
         .sort({ puntuacion: -1 })
         .limit(10)
-        .then(users => {
+        .then(partidas => {
             res.json({
                 status: "success",
                 message: "Los 10 usuarios con más puntos obtenidos",
-                data: users
+                data: partidas
             });
         })
         .catch(error => {
@@ -114,8 +150,7 @@ exports.topUsers = function(req, res) {
 };
 
 
-exports.incrementarPuntuacionUsuario
- = function(req, res) {
+exports.incrementarpuntuacionTotalUsuario = function(req, res) {
     const usuarioId = req.params.usuario_id;
     const puntosParaIncrementar = req.body.puntos;
 
@@ -126,7 +161,7 @@ exports.incrementarPuntuacionUsuario
         });
     }
 
-    Usuarios.findByIdAndUpdate(usuarioId, { $inc: { puntuacion: puntosParaIncrementar } }, { new: true })
+    Usuarios.findByIdAndUpdate(usuarioId, { $inc: { puntuacionTotal: puntosParaIncrementar } }, { new: true })
         .then(usuarioActualizado => {
             if (!usuarioActualizado) {
                 return res.status(404).json({
@@ -150,7 +185,7 @@ exports.incrementarPuntuacionUsuario
 };
 
 
-exports.incrementarPuntuacionGeneral = function(req, res) {
+exports.incrementarpuntuacionTotalGeneral = function(req, res) {
     const puntosIncrementar = req.body.puntos;
 
     if (!puntosIncrementar || puntosIncrementar <= 0) {
@@ -160,7 +195,7 @@ exports.incrementarPuntuacionGeneral = function(req, res) {
         });
     }
 
-    Usuarios.updateMany({}, { $inc: { puntuacion: puntosIncrementar } })
+    Usuarios.updateMany({}, { $inc: { puntuacionTotal: puntosIncrementar } })
         .then(result => {
             res.json({
                 status: "success",
@@ -177,14 +212,51 @@ exports.incrementarPuntuacionGeneral = function(req, res) {
         });
 };
 
+exports.update = function(req, res) {
+    Usuarios.findById(req.params.usuario_id).then(function(usuario) {
+        usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
 
-exports.update = function(req, res)
+        // Hashear la clave solo si se proporciona en la solicitud
+        if (req.body.clave) {
+            bcrypt.hash(req.body.clave, 10, function(err, hash) {
+                if (err) {
+                    return res.status(500).json({
+                        message: "Error al hashear la contraseña",
+                        error: err.message
+                    });
+                }
+                usuario.clave = hash; // Guardar el hash en lugar de la contraseña sin hashear
+                guardarUsuario(usuario, res);
+            });
+        } else {
+            // Si no se proporciona la clave, guardamos el usuario sin modificarla
+            guardarUsuario(usuario, res);
+        }
+    });
+};
+
+function guardarUsuario(usuario, res) {
+    usuario.save().then(function(data) {
+        res.json({
+            message: "Usuario actualizado exitosamente",
+            data: data
+        });
+    }).catch(function(err) {
+        res.status(500).json({
+            message: "Error al actualizar usuario",
+            error: err.message
+        });
+    });
+}
+
+
+/*exports.update = function(req, res)
 {
     Usuarios.findById(req.params.usuario_id).then(function(usuario)
     {
         usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
         usuario.clave = req.body.clave ? req.body.clave : usuario.clave;
-        usuario.puntuacion = req.body.puntuacion ? req.body.puntuacion : usuario.puntuacion;
+        usuario.puntuacionTotal = req.body.puntuacionTotal ? req.body.puntuacionTotal : usuario.puntuacionTotal;
 
         usuario.save().then(function(data)
         {
@@ -194,8 +266,33 @@ exports.update = function(req, res)
             })
         });
     })
-}
+}*/
 
+
+exports.login = function(req, res) {
+    const { nombre, clave } = req.body;
+
+    // Buscar el usuario por su nombre de usuario
+    Usuarios.findOne({ nombre: nombre }).then(function(usuario) {
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+
+        // Comparar la contraseña proporcionada con la contraseña almacenada (hasheada)
+        bcrypt.compare(clave, usuario.clave, function(err, result) {
+            if (err) {
+                return res.status(500).json({ message: "Error al comparar contraseñas", error: err.message });
+            }
+            if (result) {
+                return res.json({ message: "Inicio de sesión exitoso", data: usuario });
+            } else {
+                return res.status(401).json({ message: "Credenciales incorrectas" });
+            }
+        });
+    }).catch(function(err) {
+        return res.status(500).json({ message: "Error al buscar usuario", error: err.message });
+    });
+};
 
 
 

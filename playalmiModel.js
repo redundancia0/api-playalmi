@@ -9,10 +9,15 @@ const usuarioSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    puntuacion: {
+    monedasTotal: {
+        type: Number,
+        default: 0
+    },
+    puntuacionTotal: {
         type: Number,
         default: 0
     }
+
 }, { collection: 'usuarios' });
 
 const Usuarios = mongoose.model('usuarios', usuarioSchema);
@@ -33,6 +38,10 @@ const partidaSchema = mongoose.Schema({
         type: Number,
         default: 0,
         required: true
+    },
+    monedas: {
+        type: Number,
+        default: 0
     },
     fecha: {
         type: Date,

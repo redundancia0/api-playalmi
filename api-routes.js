@@ -18,16 +18,19 @@ router.route('/usuarios/findbyid/:usuario_id')
     .delete(playalmiController.delete)
     .put(playalmiController.update)
 
-router.route('/usuarios/top')
-    .get(playalmiController.topUsers)
+router.route('/partidas/top') 
+    .get(playalmiController.topUsers) // CAMBIAR LA FUNCIÓN PARA QUE EN VEZ DE VER EL TOP MEJORES USUARIOS, LO MIRE DESDE EL DOCUMENTO PARTIDAS, EN VEZ DE DESDE EL DOCUMENTO USUARIOS
 
 router.route('/usuarios/incrementarPuntos/findbyid/:usuario_id')
-    .post(playalmiController.incrementarPuntuacionUsuario)
+    .post(playalmiController.incrementarpuntuacionTotalUsuario)
 
 router.route('/usuarios/incrementarPuntos/')
-    .post(playalmiController.incrementarPuntuacionGeneral)
+    .post(playalmiController.incrementarpuntuacionTotalGeneral)
 
-router.route('/partidas/guardarPartida')
-    .post(playalmiController.guardarPartida)
+router.route('/partidas/insertarPartida')
+    .post(playalmiController.insertarPartida)
+
+router.route('/usuarios/login')
+    .post(playalmiController.login) 
 
 module.exports = router;
