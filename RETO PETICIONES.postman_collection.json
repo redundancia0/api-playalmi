@@ -1,0 +1,276 @@
+{
+	"info": {
+		"_postman_id": "ac782638-dcd5-4df5-bd6d-628f8c424ede",
+		"name": "RETO PETICIONES",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34338024"
+	},
+	"item": [
+		{
+			"name": "INSERTAR USUARIO (POST)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "nombre",
+							"value": "ander27",
+							"type": "text"
+						},
+						{
+							"key": "clave",
+							"value": "1234",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "OBTENER USUARIOS (GET)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "OBTENER USUARIO (GET)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/findbyid/662245994a92ef3fac6e9533",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"findbyid",
+						"662245994a92ef3fac6e9533"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ELIMINAR USUARIO (DELETE)",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/findbyid/662245994a92ef3fac6e9533",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"findbyid",
+						"662245994a92ef3fac6e9533"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "MODIFICAR USUARIO (PUT)",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "nombre",
+							"value": "ruben",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "puntuacion",
+							"value": "7000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/findbyid/662245a64a92ef3fac6e9539",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"findbyid",
+						"662245a64a92ef3fac6e9539"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "OBTENER TOP 10 (GET)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/top",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"top"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUMAR PUNTOS USUARIO (POST)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "puntos",
+							"value": "1000000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/incrementarPuntos/findbyid/662245a64a92ef3fac6e9539",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"incrementarPuntos",
+						"findbyid",
+						"662245a64a92ef3fac6e9539"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SUMAR A TODOS LOS USUARIOS (POST)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "puntos",
+							"value": "30000000000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/incrementarPuntos/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						"incrementarPuntos",
+						""
+					],
+					"query": [
+						{
+							"key": "puntos",
+							"value": "300000000000",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GUARDAR PARTIDA (POST)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "usuario_id",
+							"value": "6622459f4a92ef3fac6e9535",
+							"type": "text"
+						},
+						{
+							"key": "puntuacion",
+							"value": "1000",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/partidas/guardarPartida",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"partidas",
+						"guardarPartida"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
