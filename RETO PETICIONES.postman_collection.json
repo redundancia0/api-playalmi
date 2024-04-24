@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ac782638-dcd5-4df5-bd6d-628f8c424ede",
+		"_postman_id": "4fd424b5-878a-4c99-bb65-596b65e80125",
 		"name": "RETO PETICIONES",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "34338024"
@@ -16,12 +16,27 @@
 					"urlencoded": [
 						{
 							"key": "nombre",
-							"value": "ander27",
+							"value": "ruben9",
 							"type": "text"
 						},
 						{
 							"key": "clave",
 							"value": "1234",
+							"type": "text"
+						},
+						{
+							"key": "rango",
+							"value": "1",
+							"type": "text"
+						},
+						{
+							"key": "monedasTotal",
+							"value": "0",
+							"type": "text"
+						},
+						{
+							"key": "puntuacionTotal",
+							"value": "0",
 							"type": "text"
 						}
 					]
@@ -36,6 +51,67 @@
 					"path": [
 						"api",
 						"usuarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "INSERTAR PARTIDA (POST)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "usuario_id",
+							"value": "6622459f4a92ef3fac6e9535",
+							"type": "text"
+						},
+						{
+							"key": "puntuacion",
+							"value": "7000",
+							"type": "text"
+						},
+						{
+							"key": "monedas",
+							"value": "3",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/partidas/insertarPartida",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"partidas",
+						"insertarPartida"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ELIMINAR PARTIDAS",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/partidas",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"partidas"
 					]
 				}
 			},
@@ -106,6 +182,27 @@
 			"response": []
 		},
 		{
+			"name": "ELIMINAR USUARIOS (DELETE)",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/usuarios/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"usuarios",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "MODIFICAR USUARIO (PUT)",
 			"request": {
 				"method": "PUT",
@@ -120,14 +217,14 @@
 							"disabled": true
 						},
 						{
-							"key": "puntuacion",
-							"value": "7000",
+							"key": "puntuacionTotal",
+							"value": "1000",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:8080/api/usuarios/findbyid/662245a64a92ef3fac6e9539",
+					"raw": "http://localhost:8080/api/usuarios/findbyid/6628bda4442b67a565c383ce",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -137,7 +234,7 @@
 						"api",
 						"usuarios",
 						"findbyid",
-						"662245a64a92ef3fac6e9539"
+						"6628bda4442b67a565c383ce"
 					]
 				}
 			},
@@ -149,7 +246,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/api/usuarios/top",
+					"raw": "http://localhost:8080/api/partidas/top",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -157,7 +254,7 @@
 					"port": "8080",
 					"path": [
 						"api",
-						"usuarios",
+						"partidas",
 						"top"
 					]
 				}
@@ -237,7 +334,7 @@
 			"response": []
 		},
 		{
-			"name": "GUARDAR PARTIDA (POST)",
+			"name": "LOGIN (POST)",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -245,19 +342,19 @@
 					"mode": "urlencoded",
 					"urlencoded": [
 						{
-							"key": "usuario_id",
-							"value": "6622459f4a92ef3fac6e9535",
+							"key": "nombre",
+							"value": "ruben23",
 							"type": "text"
 						},
 						{
-							"key": "puntuacion",
-							"value": "1000",
+							"key": "clave",
+							"value": "1234",
 							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:8080/api/partidas/guardarPartida",
+					"raw": "http://localhost:8080/api/usuarios/login/",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -265,8 +362,9 @@
 					"port": "8080",
 					"path": [
 						"api",
-						"partidas",
-						"guardarPartida"
+						"usuarios",
+						"login",
+						""
 					]
 				}
 			},
