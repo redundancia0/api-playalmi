@@ -10,25 +10,32 @@ router.get('/', function(req, res)
 
 var playalmiController = require('./playalmiController')
 router.route('/usuarios')
-    .get(playalmiController.index)
-    .post(playalmiController.new)
+    .get(playalmiController.obtenerUsuarios)
+    .delete(playalmiController.eliminarUsuarios)
+    .post(playalmiController.crearUsuario)
 
 router.route('/usuarios/findbyid/:usuario_id')
-    .get(playalmiController.view)
-    .delete(playalmiController.delete)
-    .put(playalmiController.update)
+    .get(playalmiController.verUsuario)
+    .delete(playalmiController.eliminarUsuario)
+    .put(playalmiController.actualizarUsuario)
 
 router.route('/partidas/top') 
-    .get(playalmiController.topUsers) // CAMBIAR LA FUNCIÓN PARA QUE EN VEZ DE VER EL TOP MEJORES USUARIOS, LO MIRE DESDE EL DOCUMENTO PARTIDAS, EN VEZ DE DESDE EL DOCUMENTO USUARIOS
+    .get(playalmiController.topUsuarios) // CAMBIAR LA FUNCIÓN PARA QUE EN VEZ DE VER EL TOP MEJORES USUARIOS, LO MIRE DESDE EL DOCUMENTO PARTIDAS, EN VEZ DE DESDE EL DOCUMENTO USUARIOS
 
 router.route('/usuarios/incrementarPuntos/findbyid/:usuario_id')
     .post(playalmiController.incrementarpuntuacionTotalUsuario)
+
+router.route('/backup/receive')
+    .post(playalmiController.backupReceiver)
 
 router.route('/usuarios/incrementarPuntos/')
     .post(playalmiController.incrementarpuntuacionTotalGeneral)
 
 router.route('/partidas/insertarPartida')
     .post(playalmiController.insertarPartida)
+
+router.route('/partidas/')
+    .delete(playalmiController.eliminarPartidas)
 
 router.route('/usuarios/login')
     .post(playalmiController.login) 

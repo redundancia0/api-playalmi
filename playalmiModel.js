@@ -13,7 +13,12 @@ const usuarioSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
-    puntuacionTotal: {
+    rango: {
+        type: Number,
+        enum: [0, 1], 
+        default: 0
+    },
+    puntuacion: {
         type: Number,
         default: 0
     }
@@ -47,6 +52,7 @@ const partidaSchema = mongoose.Schema({
         type: Date,
         default: Date.now
     }
+
 }, { collection: 'partidas' });
 
 const Partidas = mongoose.model('partidas', partidaSchema);

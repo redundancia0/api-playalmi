@@ -1,11 +1,20 @@
 
 const bcrypt = require('bcrypt');
-
+const multer = require('multer');
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname)
+    }
+});
+const upload = multer({ storage: storage });
 const { model } = require('mongoose');
 Usuarios = require('./playalmiModel').Usuarios;
 Partidas = require('./playalmiModel').Partidas;
 
-exports.index = function(req, res) {        
+exports.obtenerUsuarios = function(req, res) {        
     Usuarios.get().then((usuario) => {
         res.json({
             status: "success",
@@ -22,9 +31,20 @@ exports.index = function(req, res) {
 };
 
 //REVISADO
-exports.new = function(req, res) {
+exports.crearUsuario = function(req, res) {
     var usuario = new Usuarios();
     usuario.nombre = req.body.nombre;
+    if (req.body.puntuacionTotal !== undefined) {
+        usuario.puntuacionTotal = req.body.puntuacionTotal;
+    } else if (req.body.monedasTotal !== undefined) {
+        usuario.monedasTotal = req.body.monedasTotal;
+    } else if (req.body.rango !== undefined) {
+        usuario.rango = 0;
+    } else {
+        usuario.puntuacionTotal = 0;
+        usuario.monedasTotal = 0;
+    }
+    
     bcrypt.hash(req.body.clave, 10, function(err, hash) {
         if (err) {
             return res.status(500).json({
@@ -33,8 +53,6 @@ exports.new = function(req, res) {
             });
         }
         usuario.clave = hash;
-        usuario.monedasTotal = 0;
-        usuario.puntuacionTotal = 0;
 
         usuario.save().then(function(usuario) {
             res.json({
@@ -47,6 +65,20 @@ exports.new = function(req, res) {
                 error: err.message
             });
         });
+    });
+};
+
+exports.backupReceiver = function(req, res) {
+    upload.single('file')(req, res, function (err) {
+        if (err instanceof multer.MulterError) {
+            console.log(err.message)
+            return res.status(500).json({ error: err.message });
+        } else if (err) {
+            console.log(err.message)
+            return res.status(500).json({ error: 'Unknown error occurred' });
+        }
+        
+        res.status(200).json({ message: 'File uploaded successfully' });
     });
 };
 
@@ -84,7 +116,7 @@ exports.insertarPartida = function(req, res) {
         });
 };
 
-exports.view = function(req, res)
+exports.verUsuario = function(req, res)
 {
     Usuarios.findById(req.params.usuario_id).then(function(usuario)
     {
@@ -96,7 +128,7 @@ exports.view = function(req, res)
     });
 }
 
-exports.delete = function(req, res)
+exports.eliminarUsuario = function(req, res)
 {
     Usuarios.deleteOne({_id: req.params.usuario_id}).then(function(usuario)
     {
@@ -107,7 +139,36 @@ exports.delete = function(req, res)
     });
 }
 
-exports.topUsers = function(req, res) {
+exports.eliminarUsuarios = function(req, res) {
+    Usuarios.deleteMany({}).then(function(result) {
+        res.json({
+            status: "Todos los usuarios han sido eliminados exitosamente",
+            data: result
+        });
+    }).catch(function(err) {
+        res.status(500).json({
+            status: "Error al eliminar usuarios",
+            error: err
+        });
+    });
+};
+
+exports.eliminarPartidas = function(req, res) {
+    Partidas.deleteMany({}).then(function(result) {
+        res.json({
+            status: "Todos las partidas han sido eliminadas exitosamente",
+            data: result
+        });
+    }).catch(function(err) {
+        res.status(500).json({
+            status: "Error al eliminar las partidas",
+            error: err
+        });
+    });
+};
+
+
+exports.topUsuarios = function(req, res) {
     Partidas.find()
         .sort({ puntuacion: -1 })
         .limit(10)
@@ -126,7 +187,6 @@ exports.topUsers = function(req, res) {
             });
         });
 };
-
 
 exports.incrementarpuntuacionTotalUsuario = function(req, res) {
     const usuarioId = req.params.usuario_id;
@@ -190,7 +250,7 @@ exports.incrementarpuntuacionTotalGeneral = function(req, res) {
         });
 };
 
-exports.update = function(req, res) {
+exports.actualizarUsuario = function(req, res) {
     Usuarios.findById(req.params.usuario_id).then(function(usuario) {
         usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
 
@@ -248,13 +308,11 @@ function guardarUsuario(usuario, res) {
 exports.login = function(req, res) {
     const { nombre, clave } = req.body;
 
-    // Buscar el usuario por su nombre de usuario
     Usuarios.findOne({ nombre: nombre }).then(function(usuario) {
         if (!usuario) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        // Comparar la contraseña proporcionada con la contraseña almacenada (hasheada)
         bcrypt.compare(clave, usuario.clave, function(err, result) {
             if (err) {
                 return res.status(500).json({ message: "Error al comparar contraseñas", error: err.message });
