@@ -34,15 +34,21 @@ exports.obtenerUsuarios = function(req, res) {
 exports.crearUsuario = function(req, res) {
     var usuario = new Usuarios();
     usuario.nombre = req.body.nombre;
-    if (req.body.puntuacionTotal !== undefined) {
-        usuario.puntuacionTotal = req.body.puntuacionTotal;
-    } else if (req.body.monedasTotal !== undefined) {
-        usuario.monedasTotal = req.body.monedasTotal;
-    } else if (req.body.rango !== undefined) {
+    usuario.correo = req.body.correo;
+    if (req.body.puntuacion !== undefined) {
+        usuario.puntuacion = req.body.puntuacion;
+    } 
+    if (req.body.monedas !== undefined) {
+        usuario.monedas = req.body.monedas;
+    } 
+    if (req.body.rango !== undefined) {
         usuario.rango = 0;
+    } 
+    if (req.body.avatar !== undefined) {
+        usuario.avatar = "-";
     } else {
-        usuario.puntuacionTotal = 0;
-        usuario.monedasTotal = 0;
+        usuario.puntuacion = 0;
+        usuario.monedas = 0;
     }
     
     bcrypt.hash(req.body.clave, 10, function(err, hash) {
