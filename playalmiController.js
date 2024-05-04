@@ -1,4 +1,4 @@
-
+/* LISTADO DE MÓDULOS */
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const storage = multer.diskStorage({
@@ -11,9 +11,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 const { model } = require('mongoose');
+
+/* MODELOS */
 Usuarios = require('./playalmiModel').Usuarios;
 Partidas = require('./playalmiModel').Partidas;
 
+/* FUNCIÓN -> OBTENER TODOS LOS USUARIOS [IMPLEMENTADO - WEB] */
 exports.obtenerUsuarios = function(req, res) {        
     Usuarios.get().then((usuario) => {
         res.json({
@@ -30,50 +33,67 @@ exports.obtenerUsuarios = function(req, res) {
     });
 };
 
-//REVISADO
+/* FUNCIÓN -> CREAR UN NUEVO USUARIO (ALTA) [IMPLEMENTADO - WEB] */
 exports.crearUsuario = function(req, res) {
-    var usuario = new Usuarios();
-    usuario.nombre = req.body.nombre;
-    usuario.correo = req.body.correo;
-    if (req.body.puntuacion !== undefined) {
-        usuario.puntuacion = req.body.puntuacion;
-    } 
-    if (req.body.monedas !== undefined) {
-        usuario.monedas = req.body.monedas;
-    } 
-    if (req.body.rango !== undefined) {
-        usuario.rango = 0;
-    } 
-    if (req.body.avatar !== undefined) {
-        usuario.avatar = "-";
-    } else {
-        usuario.puntuacion = 0;
-        usuario.monedas = 0;
-    }
-    
-    bcrypt.hash(req.body.clave, 10, function(err, hash) {
-        if (err) {
-            return res.status(500).json({
-                message: "Error al hashear la contraseña",
-                error: err.message
-            });
-        }
-        usuario.clave = hash;
+    Usuarios.findOne({ $or: [{ nombre: req.body.nombre }, { correo: req.body.correo }] })
+        .then(existingUser => {
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "El nombre de usuario o el correo electrónico ya están en uso"
+                });
+            }
 
-        usuario.save().then(function(usuario) {
-            res.json({
-                message: "Nuevo usuario creado",
-                data: usuario
-            });
-        }).catch(function(err) {
+            var usuario = new Usuarios();
+            usuario.nombre = req.body.nombre;
+            usuario.correo = req.body.correo;
+            if (req.body.puntuacion !== undefined) {
+                usuario.puntuacion = req.body.puntuacion;
+            } 
+            if (req.body.monedas !== undefined) {
+                usuario.monedas = req.body.monedas;
+            } 
+            if (req.body.rango !== undefined) {
+                usuario.rango = 0;
+            } 
+            if (req.body.avatar !== undefined) {
+                usuario.avatar = "-";
+            } else {
+                usuario.puntuacion = 0;
+                usuario.monedas = 0;
+            }
+
+            bcrypt.hash(req.body.clave, 10)
+                .then(hash => {
+                    usuario.clave = hash;
+
+                    usuario.save().then(function(usuario) {
+                        res.json({
+                            message: "Nuevo usuario creado",
+                            data: usuario
+                        });
+                    }).catch(function(err) {
+                        res.status(500).json({
+                            message: "Error al crear nuevo usuario",
+                            error: err.message
+                        });
+                    });
+                })
+                .catch(err => {
+                    res.status(500).json({
+                        message: "Error al hashear la contraseña",
+                        error: err.message
+                    });
+                });
+        })
+        .catch(err => {
             res.status(500).json({
-                message: "Error al crear nuevo usuario",
+                message: "Error al buscar usuario existente",
                 error: err.message
             });
         });
-    });
 };
 
+/* FUNCIÓN -> RECIBIR ARCHIVOS BACKUPS (.ZIP) [IMPLEMENTADO EN VPS]*/
 exports.backupReceiver = function(req, res) {
     upload.single('file')(req, res, function (err) {
         if (err instanceof multer.MulterError) {
@@ -88,6 +108,7 @@ exports.backupReceiver = function(req, res) {
     });
 };
 
+/* FUNCIÓN -> INSERTAR PARTIDA .ZIP [EN IMPLEMENTACIÓN...] */
 exports.insertarPartida = function(req, res) {
     const { usuario_id, puntuacion, monedas } = req.body;
 
@@ -122,6 +143,7 @@ exports.insertarPartida = function(req, res) {
         });
 };
 
+/* FUNCIÓN -> VER INFORMACIÓN DE UN USUARIO MEDIANTE ID [IMPLEMENTADO - WEB] */
 exports.verUsuario = function(req, res)
 {
     Usuarios.findById(req.params.usuario_id).then(function(usuario)
@@ -134,6 +156,7 @@ exports.verUsuario = function(req, res)
     });
 }
 
+/* FUNCIÓN -> ELIMINAR UN USUARIO POR ID [IMPLEMENTADO - WEB] */
 exports.eliminarUsuario = function(req, res)
 {
     Usuarios.deleteOne({_id: req.params.usuario_id}).then(function(usuario)
@@ -145,6 +168,7 @@ exports.eliminarUsuario = function(req, res)
     });
 }
 
+/* FUNCIÓN -> ELIMINAR TODOS LOS USUARIOS [PARA DEBUGUEAR] */
 exports.eliminarUsuarios = function(req, res) {
     Usuarios.deleteMany({}).then(function(result) {
         res.json({
@@ -159,6 +183,7 @@ exports.eliminarUsuarios = function(req, res) {
     });
 };
 
+/* FUNCIÓN -> ELIMINAR TODAS LAS PARTIDAS [PARA DEBUGUEAR] */
 exports.eliminarPartidas = function(req, res) {
     Partidas.deleteMany({}).then(function(result) {
         res.json({
@@ -173,27 +198,47 @@ exports.eliminarPartidas = function(req, res) {
     });
 };
 
+/* FUNCIÓN -> MOSTRAR TOP MEJORES USUARIOS [IMPLEMENTADO - WEB - JUEGO] */
+exports.topUsuarios = async function(req, res) {
+    try {
+        const partidas = await Partidas.find()
+            .sort({ puntuacion: -1 })
+            .limit(10)
+            .populate('usuario_id');
 
-exports.topUsuarios = function(req, res) {
-    Partidas.find()
-        .sort({ puntuacion: -1 })
-        .limit(10)
-        .then(partidas => {
-            res.json({
-                status: "success",
-                message: "Los 10 usuarios con más puntos obtenidos",
-                data: partidas
-            });
-        })
-        .catch(error => {
-            res.status(500).json({
-                status: "error",
-                message: "Error al obtener los usuarios con más puntos",
-                error: error.message
-            });
+        const usuariosSet = new Set();
+        const topUsuarios = [];
+
+        partidas.forEach(partida => {
+            if (partida.usuario_id && partida.usuario_id._id) {
+                const usuario = partida.usuario_id;
+                if (!usuariosSet.has(usuario._id)) {
+                    usuariosSet.add(usuario._id);
+                    topUsuarios.push({
+                        usuario_id: usuario._id,
+                        nombre: usuario.nombre,
+                        correo: usuario.correo,
+                        puntuacion: partida.puntuacion
+                    });
+                }
+            }
         });
+
+        res.json({
+            status: "success",
+            message: "Los 10 usuarios con más puntos obtenidos (sin repetir)",
+            data: topUsuarios
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Error al obtener los usuarios con más puntos",
+            error: error.message
+        });
+    }
 };
 
+/* FUNCIÓN -> INCREMENTAR PUNTUACIÓN DE UN USUARIO [NO IMPLEMENTADO] */
 exports.incrementarpuntuacionTotalUsuario = function(req, res) {
     const usuarioId = req.params.usuario_id;
     const puntosParaIncrementar = req.body.puntos;
@@ -228,7 +273,7 @@ exports.incrementarpuntuacionTotalUsuario = function(req, res) {
         });
 };
 
-
+/* FUNCIÓN -> INCREMENTAR PUNTUACIÓN GENERAL DE TODOS LOS USUARIOS [NO IMPLEMENTADO] */
 exports.incrementarpuntuacionTotalGeneral = function(req, res) {
     const puntosIncrementar = req.body.puntos;
 
@@ -256,9 +301,14 @@ exports.incrementarpuntuacionTotalGeneral = function(req, res) {
         });
 };
 
+/* FUNCIÓN -> MODIFICAR INFORMACIÓN DE UN USUARIO [IMPLEMENTADO - WEB] */
 exports.actualizarUsuario = function(req, res) {
     Usuarios.findById(req.params.usuario_id).then(function(usuario) {
         usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
+        usuario.rango = req.body.rango ? req.body.rango : usuario.rango;
+        usuario.puntuacion = req.body.puntuacion ? req.body.puntuacion : usuario.puntuacion;
+        usuario.monedas = req.body.monedas ? req.body.monedas : usuario.monedas;
+
 
         if (req.body.clave) {
             bcrypt.hash(req.body.clave, 10, function(err, hash) {
@@ -277,6 +327,7 @@ exports.actualizarUsuario = function(req, res) {
     });
 };
 
+/* FUNCIÓN -> GUARDAR UN USUARIO -> [IMPLEMENTADO EN .CREARUSUARIO] */
 function guardarUsuario(usuario, res) {
     usuario.save().then(function(data) {
         res.json({
@@ -291,26 +342,7 @@ function guardarUsuario(usuario, res) {
     });
 }
 
-
-/*exports.update = function(req, res)
-{
-    Usuarios.findById(req.params.usuario_id).then(function(usuario)
-    {
-        usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
-        usuario.clave = req.body.clave ? req.body.clave : usuario.clave;
-        usuario.puntuacionTotal = req.body.puntuacionTotal ? req.body.puntuacionTotal : usuario.puntuacionTotal;
-
-        usuario.save().then(function(data)
-        {
-            res.json({
-                message: "Usuarios actualizado exitosamente",
-                data: data
-            })
-        });
-    })
-}*/
-
-
+/* FUNCIÓN -> COMPROBAR SI USUARIO/CONTRASEÑA HASHEADA SON CORRECTOS [IMPLEMENTADO - WEB - JUEGO] */
 exports.login = function(req, res) {
     const { nombre, clave } = req.body;
 

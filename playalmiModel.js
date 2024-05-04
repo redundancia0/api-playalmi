@@ -4,6 +4,7 @@ const usuarioSchema = mongoose.Schema({
     nombre: {
         type: String,
         required: true,
+        unique: true,
     },
     clave: {
         type: String,
@@ -12,14 +13,15 @@ const usuarioSchema = mongoose.Schema({
     monedas: {
         type: Number,
         default: 0,
+        required: true
     },
     avatar: {
         type: String,
-        required: true
     },
     correo: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     rango: {
         type: Number,
