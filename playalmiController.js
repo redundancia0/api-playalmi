@@ -36,61 +36,61 @@ exports.obtenerUsuarios = function(req, res) {
 /* FUNCIÓN -> CREAR UN NUEVO USUARIO (ALTA) [IMPLEMENTADO - WEB] */
 exports.crearUsuario = function(req, res) {
     Usuarios.findOne({ $or: [{ nombre: req.body.nombre }, { correo: req.body.correo }] })
-        .then(existingUser => {
-            if (existingUser) {
-                return res.status(400).json({
-                    message: "El nombre de usuario o el correo electrónico ya están en uso"
-                });
-            }
+    .then(existingUser => {
+        if (existingUser) {
+            return res.status(400).json({
+                message: "El nombre de usuario o el correo electrónico ya están en uso"
+            });
+        }
 
-            var usuario = new Usuarios();
-            usuario.nombre = req.body.nombre;
-            usuario.correo = req.body.correo;
-            if (req.body.puntuacion !== undefined) {
-                usuario.puntuacion = req.body.puntuacion;
-            } 
-            if (req.body.monedas !== undefined) {
-                usuario.monedas = req.body.monedas;
-            } 
-            if (req.body.rango !== undefined) {
-                usuario.rango = 0;
-            } 
-            if (req.body.avatar !== undefined) {
-                usuario.avatar = "-";
-            } else {
-                usuario.puntuacion = 0;
-                usuario.monedas = 0;
-            }
+        var usuario = new Usuarios();
+        usuario.nombre = req.body.nombre;
+        usuario.correo = req.body.correo;
+        usuario.avatar = req.body.avatar; // Utiliza req.body.avatar aquí
+        console.log(req.body.avatar); // Imprime el valor del avatar
+        if (req.body.puntuacion !== undefined) {
+            usuario.puntuacion = req.body.puntuacion;
+        } 
+        if (req.body.monedas !== undefined) {
+            usuario.monedas = req.body.monedas;
+        } 
+        if (req.body.rango !== undefined) {
+            usuario.rango = 0;
+        } else {
+            usuario.puntuacion = 0;
+            usuario.monedas = 0;
+        }
 
-            bcrypt.hash(req.body.clave, 10)
-                .then(hash => {
-                    usuario.clave = hash;
+        bcrypt.hash(req.body.clave, 10)
+            .then(hash => {
+                usuario.clave = hash;
 
-                    usuario.save().then(function(usuario) {
-                        res.json({
-                            message: "Nuevo usuario creado",
-                            data: usuario
-                        });
-                    }).catch(function(err) {
-                        res.status(500).json({
-                            message: "Error al crear nuevo usuario",
-                            error: err.message
-                        });
+                usuario.save().then(function(usuario) {
+                    res.json({
+                        message: "Nuevo usuario creado",
+                        data: usuario
                     });
-                })
-                .catch(err => {
+                }).catch(function(err) {
                     res.status(500).json({
-                        message: "Error al hashear la contraseña",
+                        message: "Error al crear nuevo usuario",
                         error: err.message
                     });
                 });
-        })
-        .catch(err => {
-            res.status(500).json({
-                message: "Error al buscar usuario existente",
-                error: err.message
+            })
+            .catch(err => {
+                res.status(500).json({
+                    message: "Error al hashear la contraseña",
+                    error: err.message
+                });
             });
+    })
+    .catch(err => {
+        res.status(500).json({
+            message: "Error al buscar usuario existente",
+            error: err.message
         });
+    });
+
 };
 
 /* FUNCIÓN -> RECIBIR ARCHIVOS BACKUPS (.ZIP) [IMPLEMENTADO EN VPS]*/
@@ -361,6 +361,7 @@ exports.actualizarUsuario = function(req, res) {
         usuario.rango = req.body.rango ? req.body.rango : usuario.rango;
         usuario.puntuacion = req.body.puntuacion ? req.body.puntuacion : usuario.puntuacion;
         usuario.monedas = req.body.monedas ? req.body.monedas : usuario.monedas;
+        usuario.avatar = req.body.avatar ? req.body.avatar : usuario.avatar;
 
 
         if (req.body.clave) {
