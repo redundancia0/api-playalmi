@@ -131,6 +131,49 @@ exports.ultimasPartidas = function(req, res) {
         });
 };
 
+/* FUNCIÓN -> RESTAR MONEDAS DE UN USUARIO POR ID */
+exports.restarMonedasUsuario = function(req, res) {
+    const { usuario_id } = req.params;
+    const { monedas } = req.body;
+
+    if (!monedas || monedas <= 0) {
+        return res.status(400).json({
+            status: "error",
+            message: "Se debe proporcionar una cantidad válida de monedas a restar"
+        });
+    }
+
+    // Encontrar al usuario por su ID y actualizar las monedas
+    Usuarios.findById(usuario_id)
+        .then(async usuario => {
+            if (!usuario) {
+                return res.status(404).json({
+                    status: "error",
+                    message: "Usuario no encontrado"
+                });
+            }
+
+            // Restar las monedas
+            usuario.monedas -= monedas;
+
+            // Guardar los cambios en el usuario
+            await usuario.save();
+
+            res.json({
+                status: "success",
+                message: `Se han restado ${monedas} monedas al usuario con ID ${usuario_id}`,
+                data: usuario
+            });
+        })
+        .catch(error => {
+            res.status(500).json({
+                status: "error",
+                message: "Error al restar monedas al usuario",
+                error: error.message
+            });
+        });
+};
+
 /* FUNCIÓN -> INSERTAR PARTIDA .ZIP [EN IMPLEMENTACIÓN...] */
 exports.insertarPartida = function(req, res) {
     const { usuario_id, puntuacion, monedas } = req.body;

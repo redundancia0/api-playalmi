@@ -25,6 +25,9 @@ router.route('/partidas/top')
 router.route('/usuarios/incrementarPuntos/findbyid/:usuario_id')
     .post(playalmiController.incrementarpuntuacionTotalUsuario)
 
+router.route('/usuarios/restarMonedas/findbyid/:usuario_id')
+    .post(playalmiController.restarMonedasUsuario);
+
 router.route('/backup/receive')
     .post(playalmiController.backupReceiver)
 
