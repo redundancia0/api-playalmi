@@ -409,7 +409,17 @@ exports.login = function(req, res) {
                 return res.status(500).json({ message: "Error al comparar contraseñas", error: err.message });
             }
             if (result) {
-                return res.json({ message: "Inicio de sesión exitoso", data: usuario });
+                const userData = {
+                    _id: usuario._id,
+                    nombre: usuario.nombre,
+                    correo: usuario.correo,
+                    monedas: usuario.monedas,
+                    avatar: usuario.avatar,
+                    rango: usuario.rango,
+                    puntuacion: usuario.puntuacion,
+                    fecha_registro: usuario.fecha_registro
+                };
+                return res.json({ message: "Inicio de sesión exitoso", data: userData });
             } else {
                 return res.status(401).json({ message: "Credenciales incorrectas" });
             }
@@ -418,6 +428,7 @@ exports.login = function(req, res) {
         return res.status(500).json({ message: "Error al buscar usuario", error: err.message });
     });
 };
+
 
 
 
