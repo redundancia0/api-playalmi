@@ -34,7 +34,11 @@ router.route('/usuarios/incrementarPuntos/')
 router.route('/partidas/insertarPartida')
     .post(playalmiController.insertarPartida)
 
+router.route('/partidas/findbyid/:usuario_id')
+    .get(playalmiController.ultimasPartidas);
+
 router.route('/partidas/')
+    .post(playalmiController.insertarPartida)
     .delete(playalmiController.eliminarPartidas)
 
 router.route('/usuarios/login')

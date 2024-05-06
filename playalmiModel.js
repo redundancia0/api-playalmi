@@ -31,6 +31,10 @@ const usuarioSchema = mongoose.Schema({
     puntuacion: {
         type: Number,
         default: 0
+    },
+    fecha_registro: {
+        type: Date,
+        default: Date.now
     }
 
 }, { collection: 'usuarios' });

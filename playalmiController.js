@@ -108,6 +108,29 @@ exports.backupReceiver = function(req, res) {
     });
 };
 
+/* FUNCIÓN -> OBTENER ÚLTIMAS 5 PARTIDAS DE UN USUARIO ORDENADAS POR FECHA [IMPLEMENTADO - WEB] */
+exports.ultimasPartidas = function(req, res) {
+    const { usuario_id } = req.params;
+
+    Partidas.find({ usuario_id: usuario_id })
+        .sort({ fecha: -1 })
+        .limit(5)
+        .then(partidas => {
+            res.json({
+                status: "success",
+                message: `Las últimas 5 partidas del usuario ${usuario_id} obtenidas exitosamente`,
+                data: partidas
+            });
+        })
+        .catch(err => {
+            res.status(500).json({
+                status: "error",
+                message: "Error al obtener las últimas partidas del usuario",
+                error: err.message
+            });
+        });
+};
+
 /* FUNCIÓN -> INSERTAR PARTIDA .ZIP [EN IMPLEMENTACIÓN...] */
 exports.insertarPartida = function(req, res) {
     const { usuario_id, puntuacion, monedas } = req.body;
@@ -115,24 +138,53 @@ exports.insertarPartida = function(req, res) {
     if (!usuario_id || !puntuacion) {
         return res.status(400).json({
             status: "error",
-            message: "Se deben proporcionar el ID del usuario y el puntuacionTotal de la partida"
+            message: "Se deben proporcionar el ID del usuario y la puntuación de la partida"
+        });
+    }
+
+    const parsedPuntuacion = parseInt(puntuacion);
+    const parsedMonedas = parseInt(monedas);
+
+    if (isNaN(parsedPuntuacion) || isNaN(parsedMonedas)) {
+        return res.status(400).json({
+            status: "error",
+            message: "La puntuación y las monedas deben ser valores numéricos"
         });
     }
 
     const nuevaPartida = new Partidas({
         usuario_id: usuario_id,
-        puntuacion: puntuacion,
-        monedas: monedas,
+        puntuacion: parsedPuntuacion,
+        monedas: parsedMonedas,
         fecha: Date.now()
     });
 
     nuevaPartida.save()
-        .then(partidaGuardada => {
-            res.json({
-                status: "success",
-                message: "Partida guardada exitosamente",
-                data: partidaGuardada
-            });
+        .then(async partidaGuardada => {
+            try {
+                const usuario = await Usuarios.findById(usuario_id);
+                if (!usuario) {
+                    return res.status(404).json({
+                        status: "error",
+                        message: "Usuario no encontrado"
+                    });
+                }
+                usuario.puntuacion += parsedPuntuacion;
+                usuario.monedas += parsedMonedas;
+                await usuario.save();
+                
+                res.json({
+                    status: "success",
+                    message: "Partida guardada exitosamente. Puntuación y monedas del usuario actualizadas",
+                    data: partidaGuardada
+                });
+            } catch (error) {
+                res.status(500).json({
+                    status: "error",
+                    message: "Error al guardar la partida o actualizar puntuación y monedas del usuario",
+                    error: error.message
+                });
+            }
         })
         .catch(error => {
             res.status(500).json({
@@ -142,6 +194,7 @@ exports.insertarPartida = function(req, res) {
             });
         });
 };
+
 
 /* FUNCIÓN -> VER INFORMACIÓN DE UN USUARIO MEDIANTE ID [IMPLEMENTADO - WEB] */
 exports.verUsuario = function(req, res)
