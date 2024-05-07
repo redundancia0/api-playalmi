@@ -1,12 +1,21 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
+const session = require('express-session');
+const cors = require('cors');
 
 let apiRoutes = require("./api-routes")
 let app = express();
 
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+
+app.use(session({
+    secret: 'secreto-para-generar-la-sesion',
+    resave: false,
+    saveUninitialized: true
+}));
 
 mongoose.connect('mongodb://localhost/playalmi', {useNewUrlParser: true, useUnifiedTopology:true})
 var db = mongoose.connection;
@@ -26,7 +35,6 @@ app.listen(port, function(){
 })
 
 app.use('/api', apiRoutes)
-
 
 
 

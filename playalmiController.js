@@ -1,5 +1,6 @@
 /* LISTADO DE MÓDULOS */
 const bcrypt = require('bcrypt');
+const crypto = require('crypto'); 
 const { model } = require('mongoose');
 const mongoose = require('mongoose');
 
@@ -27,60 +28,54 @@ exports.obtenerUsuarios = function(req, res) {
 /* FUNCIÓN -> CREAR UN NUEVO USUARIO (ALTA) [IMPLEMENTADO - WEB] */
 exports.crearUsuario = function(req, res) {
     Usuarios.findOne({ $or: [{ nombre: req.body.nombre }, { correo: req.body.correo }] })
-    .then(existingUser => {
-        if (existingUser) {
-            return res.status(400).json({
-                message: "El nombre de usuario o el correo electrónico ya están en uso"
-            });
-        }
+        .then(existingUser => {
+            if (existingUser) {
+                return res.status(400).json({
+                    message: "El nombre de usuario o el correo electrónico ya están en uso"
+                });
+            }
 
-        var usuario = new Usuarios();
-        usuario.nombre = req.body.nombre;
-        usuario.correo = req.body.correo;
-        usuario.avatar = req.body.avatar; // Utiliza req.body.avatar aquí
-        console.log(req.body.avatar); // Imprime el valor del avatar
-        if (req.body.puntuacion !== undefined) {
-            usuario.estadisticas.puntuacion = req.body.puntuacion;
-        } 
-        if (req.body.monedas !== undefined) {
-            usuario.estadisticas.monedas = req.body.monedas;
-        } 
-        if (req.body.rango !== undefined) {
-            usuario.rango = 0;
-        } else {
-            usuario.estadisticas.puntuacion = 0;
-            usuario.estadisticas.monedas = 0;
-        }
+            var usuario = new Usuarios();
+            usuario.nombre = req.body.nombre;
+            usuario.correo = req.body.correo;
+            usuario.avatar = req.body.avatar; // Utiliza req.body.avatar aquí
+            console.log(req.body.avatar); // Imprime el valor del avatar
 
-        bcrypt.hash(req.body.clave, 10)
-            .then(hash => {
-                usuario.clave = hash;
+            if (req.body.puntuacion !== undefined) {
+                usuario.estadisticas.puntuacion = req.body.puntuacion;
+            }
+            if (req.body.monedas !== undefined) {
+                usuario.estadisticas.monedas = req.body.monedas;
+            }
+            if (req.body.rango !== undefined) {
+                usuario.rango = 0;
+            } else {
+                usuario.estadisticas.puntuacion = 0;
+                usuario.estadisticas.monedas = 0;
+            }
 
-                usuario.save().then(function(usuario) {
+            usuario.clave = req.body.clave; // Almacenar la contraseña sin hashing
+
+            usuario.save()
+                .then(function(usuario) {
                     res.json({
                         message: "Nuevo usuario creado",
                         data: usuario
                     });
-                }).catch(function(err) {
+                })
+                .catch(function(err) {
                     res.status(500).json({
                         message: "Error al crear nuevo usuario",
                         error: err.message
                     });
                 });
-            })
-            .catch(err => {
-                res.status(500).json({
-                    message: "Error al hashear la contraseña",
-                    error: err.message
-                });
+        })
+        .catch(err => {
+            res.status(500).json({
+                message: "Error al buscar usuario existente",
+                error: err.message
             });
-    })
-    .catch(err => {
-        res.status(500).json({
-            message: "Error al buscar usuario existente",
-            error: err.message
         });
-    });
 };
 
 
@@ -427,40 +422,163 @@ function guardarUsuario(usuario, res) {
 }
 
 /* FUNCIÓN -> COMPROBAR SI USUARIO/CONTRASEÑA HASHEADA SON CORRECTOS [IMPLEMENTADO - WEB - JUEGO] */
-exports.login = function(req, res) {
+exports.login = function (req, res) {
     const { nombre, clave } = req.body;
 
-    Usuarios.findOne({ nombre: nombre }).then(function(usuario) {
+    Usuarios.findOne({ nombre: nombre }).then(function (usuario) {
         if (!usuario) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        bcrypt.compare(clave, usuario.clave, function(err, result) {
-            if (err) {
-                return res.status(500).json({ message: "Error al comparar contraseñas", error: err.message });
-            }
-            if (result) {
-                usuario.fecha_inicioSesion = Date.now();
-                usuario.save().then(() => {
-                    const userData = {
-                        _id: usuario._id,
-                        nombre: usuario.nombre,
-                        correo: usuario.correo,
-                        monedas: usuario.monedas,
-                        avatar: usuario.avatar,
-                        rango: usuario.rango,
-                        puntuacion: usuario.puntuacion,
-                        fecha_registro: usuario.fecha_registro
-                    };
-                    return res.json({ message: "Inicio de sesión exitoso", data: userData });
-                }).catch(error => {
-                    return res.status(500).json({ message: "Error al actualizar la fecha de inicio de sesión", error: error.message });
-                });
-            } else {
-                return res.status(401).json({ message: "Credenciales incorrectas" });
-            }
-        });
-    }).catch(function(err) {
+        const hash = crypto.createHash('sha256'); // Crear un objeto hash con SHA-256
+        const hashedInputPassword = hash.update(clave).digest('hex'); // Hash de la contraseña de entrada
+
+        if (hashedInputPassword === usuario.clave) {
+            usuario.fecha_inicioSesion = Date.now();
+            usuario.save().then(() => {
+                // Asignar parámetros a la sesión
+                req.session.user = usuario.nombre;
+                req.session.id_user = usuario._id;
+                req.session.rank = usuario.rango;
+
+                const userData = {
+                    _id: usuario._id,
+                    nombre: usuario.nombre,
+                    correo: usuario.correo,
+                    monedas: usuario.monedas,
+                    avatar: usuario.avatar,
+                    rango: usuario.rango,
+                    puntuacion: usuario.puntuacion,
+                    fecha_registro: usuario.fecha_registro
+                };
+
+                console.log(req.session)
+
+                return res.json({ message: "Inicio de sesión exitoso", data: userData });
+            }).catch(error => {
+                return res.status(500).json({ message: "Error al actualizar la fecha de inicio de sesión", error: error.message });
+            });
+        } else {
+            return res.status(401).json({ message: "Credenciales incorrectas" });
+        }
+    }).catch(function (err) {
         return res.status(500).json({ message: "Error al buscar usuario", error: err.message });
     });
+};
+
+function navAdminLi(req){
+    console.log(req.session.rank)
+    if (req.session.rank == 1){
+      return `<li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>`;
+    } else{
+      return '';
+    }
+  }
+  
+function navAdminLiActive(req){
+    console.log(req.session.rank)
+    if (req.session.rank == 1){
+      return `<li class="nav-item active"><a class="nav-link" href="/admin">Admin</a></li>`;
+    } else{
+      return '';
+    }
+  }
+
+
+/* FUNCIÓN -> NAVBAR */
+exports.navbar = function (req, res) {
+
+    console.log(req.session)
+    if (req.session.user && req.body.pagina == 'home'){
+        res.send(`<div class="container">
+        <a href="/" class="navbar-brand">FactorySurfer</a>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>          
+      <ul class="navbar-nav" id="navbarMenu">
+        <li class="nav-item active"><a href="/" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/leaderboard" class="nav-link">Leaderboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/perfil">${req.session.user}</a></li>
+        ${navAdminLi(req)}
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+      </ul>
+      <div id="reproductor">
+        <audio controls>
+            <source src="mp3/Guardians_of_Honor.mp3" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+      </div>
+    </div>`);
+      } else if (req.session.user && req.body.pagina == 'leaderboard') {
+        res.send(`<div class="container">
+        <a href="/" class="navbar-brand">FactorySurfer</a>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>          
+      <ul class="navbar-nav" id="navbarMenu">
+        <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+        <li class="nav-item active"><a href="/leaderboard" class="nav-link">Leaderboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/perfil">${req.session.user}</a></li>
+        ${navAdminLi(req)}
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+      </ul>
+      <div id="reproductor">
+        <audio controls>
+            <source src="mp3/Guardians_of_Honor.mp3" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+      </div>
+    </div>`);
+      } else if (req.session.user && req.body.pagina == 'perfil') {
+        res.send(`<div class="container">
+        <a href="/" class="navbar-brand">FactorySurfer</a>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>          
+      <ul class="navbar-nav" id="navbarMenu">
+        <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/leaderboard" class="nav-link">Leaderboard</a></li>
+        <li class="nav-item active"><a class="nav-link" href="/perfil">${req.session.user}</a></li>
+        ${navAdminLi(req)}
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+      </ul>
+      <div id="reproductor">
+        <audio controls>
+            <source src="mp3/Guardians_of_Honor.mp3" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+      </div>
+    </div>`);
+      } else if (req.session.user && req.body.pagina == 'admin') {
+        res.send(`<div class="container">
+        <a href="/" class="navbar-brand">FactorySurfer</a>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>          
+      <ul class="navbar-nav" id="navbarMenu">
+        <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+        <li class="nav-item"><a href="/leaderboard" class="nav-link">Leaderboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="/perfil">${req.session.user}</a></li>
+        ${navAdminLiActive(req)}
+        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+      </ul>
+      <div id="reproductor">
+        <audio controls>
+            <source src="mp3/Guardians_of_Honor.mp3" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+      </div>
+    </div>`);
+      }
+      else {
+        res.send(`invalido`)
+      }
 };

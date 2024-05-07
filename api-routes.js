@@ -58,5 +58,9 @@ router.route('/partidas/')
 router.route('/usuarios/login')
     .post(playalmiController.login) 
 
+
+router.route('/navbar')
+    .post(playalmiController.navbar) 
+
 /* EXPORTAR EL ENRUTADOR */
 module.exports = router;
