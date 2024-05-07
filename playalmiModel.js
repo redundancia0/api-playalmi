@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+/* ESQUEMA DE LA COLECCIÓN USUARIOS */
 const usuarioSchema = mongoose.Schema({
     nombre: {
         type: String,
@@ -8,11 +9,6 @@ const usuarioSchema = mongoose.Schema({
     },
     clave: {
         type: String,
-        required: true
-    },
-    monedas: {
-        type: Number,
-        default: 0,
         required: true
     },
     avatar: {
@@ -28,11 +24,22 @@ const usuarioSchema = mongoose.Schema({
         enum: [0, 1], 
         default: 0
     },
-    puntuacion: {
-        type: Number,
-        default: 0
+    estadisticas: {
+        monedas: {
+            type: Number,
+            default: 0,
+            required: true
+        },
+        puntuacion: {
+            type: Number,
+            default: 0
+        }
     },
     fecha_registro: {
+        type: Date,
+        default: Date.now
+    },
+    fecha_inicioSesion: {
         type: Date,
         default: Date.now
     }
@@ -47,6 +54,7 @@ Usuarios.get = function() {
 
 module.exports.Usuarios = Usuarios;
 
+/* ESQUEMA DE LA COLECCIÓN PARTIDAS */
 const partidaSchema = mongoose.Schema({
     usuario_id: {
         type: mongoose.Schema.Types.ObjectId,

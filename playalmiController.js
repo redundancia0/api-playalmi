@@ -1,15 +1,5 @@
 /* LISTADO DE MÓDULOS */
 const bcrypt = require('bcrypt');
-const multer = require('multer');
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/')
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname)
-    }
-});
-const upload = multer({ storage: storage });
 const { model } = require('mongoose');
 
 /* MODELOS */
@@ -49,16 +39,16 @@ exports.crearUsuario = function(req, res) {
         usuario.avatar = req.body.avatar; // Utiliza req.body.avatar aquí
         console.log(req.body.avatar); // Imprime el valor del avatar
         if (req.body.puntuacion !== undefined) {
-            usuario.puntuacion = req.body.puntuacion;
+            usuario.estadisticas.puntuacion = req.body.puntuacion;
         } 
         if (req.body.monedas !== undefined) {
-            usuario.monedas = req.body.monedas;
+            usuario.estadisticas.monedas = req.body.monedas;
         } 
         if (req.body.rango !== undefined) {
             usuario.rango = 0;
         } else {
-            usuario.puntuacion = 0;
-            usuario.monedas = 0;
+            usuario.estadisticas.puntuacion = 0;
+            usuario.estadisticas.monedas = 0;
         }
 
         bcrypt.hash(req.body.clave, 10)
@@ -90,23 +80,9 @@ exports.crearUsuario = function(req, res) {
             error: err.message
         });
     });
-
 };
 
-/* FUNCIÓN -> RECIBIR ARCHIVOS BACKUPS (.ZIP) [IMPLEMENTADO EN VPS]*/
-exports.backupReceiver = function(req, res) {
-    upload.single('file')(req, res, function (err) {
-        if (err instanceof multer.MulterError) {
-            console.log(err.message)
-            return res.status(500).json({ error: err.message });
-        } else if (err) {
-            console.log(err.message)
-            return res.status(500).json({ error: 'Unknown error occurred' });
-        }
-        
-        res.status(200).json({ message: 'File uploaded successfully' });
-    });
-};
+
 
 /* FUNCIÓN -> OBTENER ÚLTIMAS 5 PARTIDAS DE UN USUARIO ORDENADAS POR FECHA [IMPLEMENTADO - WEB] */
 exports.ultimasPartidas = function(req, res) {
@@ -131,7 +107,7 @@ exports.ultimasPartidas = function(req, res) {
         });
 };
 
-/* FUNCIÓN -> RESTAR MONEDAS DE UN USUARIO POR ID */
+/* FUNCIÓN -> RESTAR MONEDAS DE UN USUARIO POR ID [IMPLEMENTADO - JUEGO (TIENDA)]*/
 exports.restarMonedasUsuario = function(req, res) {
     const { usuario_id } = req.params;
     const { monedas } = req.body;
@@ -143,7 +119,6 @@ exports.restarMonedasUsuario = function(req, res) {
         });
     }
 
-    // Encontrar al usuario por su ID y actualizar las monedas
     Usuarios.findById(usuario_id)
         .then(async usuario => {
             if (!usuario) {
@@ -153,10 +128,8 @@ exports.restarMonedasUsuario = function(req, res) {
                 });
             }
 
-            // Restar las monedas
             usuario.monedas -= monedas;
 
-            // Guardar los cambios en el usuario
             await usuario.save();
 
             res.json({
@@ -174,7 +147,7 @@ exports.restarMonedasUsuario = function(req, res) {
         });
 };
 
-/* FUNCIÓN -> INSERTAR PARTIDA .ZIP [EN IMPLEMENTACIÓN...] */
+/* FUNCIÓN -> INSERTAR PARTIDA .ZIP [IMPLEMENTADO - JUEGO] */
 exports.insertarPartida = function(req, res) {
     const { usuario_id, puntuacion, monedas } = req.body;
 
@@ -212,8 +185,8 @@ exports.insertarPartida = function(req, res) {
                         message: "Usuario no encontrado"
                     });
                 }
-                usuario.puntuacion += parsedPuntuacion;
-                usuario.monedas += parsedMonedas;
+                usuario.estadisticas.puntuacion += parsedPuntuacion;
+                usuario.estadisticas.monedas += parsedMonedas;
                 await usuario.save();
                 
                 res.json({
@@ -237,7 +210,6 @@ exports.insertarPartida = function(req, res) {
             });
         });
 };
-
 
 /* FUNCIÓN -> VER INFORMACIÓN DE UN USUARIO MEDIANTE ID [IMPLEMENTADO - WEB] */
 exports.verUsuario = function(req, res)
@@ -312,6 +284,7 @@ exports.topUsuarios = async function(req, res) {
                     usuariosSet.add(usuario._id);
                     topUsuarios.push({
                         usuario_id: usuario._id,
+                        avatar: usuario.avatar,
                         nombre: usuario.nombre,
                         correo: usuario.correo,
                         puntuacion: partida.puntuacion
@@ -401,11 +374,19 @@ exports.incrementarpuntuacionTotalGeneral = function(req, res) {
 exports.actualizarUsuario = function(req, res) {
     Usuarios.findById(req.params.usuario_id).then(function(usuario) {
         usuario.nombre = req.body.nombre ? req.body.nombre : usuario.nombre;
-        usuario.rango = req.body.rango ? req.body.rango : usuario.rango;
-        usuario.puntuacion = req.body.puntuacion ? req.body.puntuacion : usuario.puntuacion;
-        usuario.monedas = req.body.monedas ? req.body.monedas : usuario.monedas;
-        usuario.avatar = req.body.avatar ? req.body.avatar : usuario.avatar;
+        usuario.rango = req.body.rango !== undefined ? req.body.rango : usuario.rango;
 
+        if (req.body.estadisticas !== undefined) {
+            usuario.estadisticas = {
+                monedas: req.body.estadisticas.monedas !== undefined ? req.body.estadisticas.monedas : usuario.estadisticas.monedas,
+                puntuacion: req.body.estadisticas.puntuacion !== undefined ? req.body.estadisticas.puntuacion : usuario.estadisticas.puntuacion
+            };
+        } else {
+            usuario.estadisticas.monedas = req.body.monedas !== undefined ? req.body.monedas : usuario.estadisticas.monedas;
+            usuario.estadisticas.puntuacion = req.body.puntuacion !== undefined ? req.body.puntuacion : usuario.estadisticas.puntuacion;
+        }
+
+        usuario.avatar = req.body.avatar ? req.body.avatar : usuario.avatar;
 
         if (req.body.clave) {
             bcrypt.hash(req.body.clave, 10, function(err, hash) {
@@ -415,7 +396,7 @@ exports.actualizarUsuario = function(req, res) {
                         error: err.message
                     });
                 }
-                usuario.clave = hash; 
+                usuario.clave = hash;
                 guardarUsuario(usuario, res);
             });
         } else {
@@ -423,6 +404,7 @@ exports.actualizarUsuario = function(req, res) {
         }
     });
 };
+
 
 /* FUNCIÓN -> GUARDAR UN USUARIO -> [IMPLEMENTADO EN .CREARUSUARIO] */
 function guardarUsuario(usuario, res) {
@@ -453,17 +435,22 @@ exports.login = function(req, res) {
                 return res.status(500).json({ message: "Error al comparar contraseñas", error: err.message });
             }
             if (result) {
-                const userData = {
-                    _id: usuario._id,
-                    nombre: usuario.nombre,
-                    correo: usuario.correo,
-                    monedas: usuario.monedas,
-                    avatar: usuario.avatar,
-                    rango: usuario.rango,
-                    puntuacion: usuario.puntuacion,
-                    fecha_registro: usuario.fecha_registro
-                };
-                return res.json({ message: "Inicio de sesión exitoso", data: userData });
+                usuario.fecha_inicioSesion = Date.now();
+                usuario.save().then(() => {
+                    const userData = {
+                        _id: usuario._id,
+                        nombre: usuario.nombre,
+                        correo: usuario.correo,
+                        monedas: usuario.monedas,
+                        avatar: usuario.avatar,
+                        rango: usuario.rango,
+                        puntuacion: usuario.puntuacion,
+                        fecha_registro: usuario.fecha_registro
+                    };
+                    return res.json({ message: "Inicio de sesión exitoso", data: userData });
+                }).catch(error => {
+                    return res.status(500).json({ message: "Error al actualizar la fecha de inicio de sesión", error: error.message });
+                });
             } else {
                 return res.status(401).json({ message: "Credenciales incorrectas" });
             }
@@ -472,48 +459,3 @@ exports.login = function(req, res) {
         return res.status(500).json({ message: "Error al buscar usuario", error: err.message });
     });
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
