@@ -47,7 +47,7 @@ router.route('/partidas/insertarPartida')
 
 /* RUTA "/PARTIDAS/FINDBYID/" (.GET): OBTENER LAS ÚLTIMAS 5 PARTIDAS DE UN USUARIO */
 router.route('/partidas/findbyid/:usuario_id')
-    .get(playalmiController.ultimasPartidas);
+    .get(playalmiController.mejoresPartidas);
 
 /* RUTA "/PARTIDAS/" (.DELETE): INSERTAR/ELIMINAR PARTIDAS*/
 router.route('/partidas/')

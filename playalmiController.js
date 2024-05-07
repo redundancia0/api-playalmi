@@ -1,6 +1,7 @@
 /* LISTADO DE MÓDULOS */
 const bcrypt = require('bcrypt');
 const { model } = require('mongoose');
+const mongoose = require('mongoose');
 
 /* MODELOS */
 Usuarios = require('./playalmiModel').Usuarios;
@@ -84,28 +85,32 @@ exports.crearUsuario = function(req, res) {
 
 
 
-/* FUNCIÓN -> OBTENER ÚLTIMAS 5 PARTIDAS DE UN USUARIO ORDENADAS POR FECHA [IMPLEMENTADO - WEB] */
-exports.ultimasPartidas = function(req, res) {
+/* FUNCIÓN -> OBTENER LAS 5 MEJORES PARTIDAS DE UN USUARIO ORDENADAS POR PUNTUACIÓN [ACTUALIZADO - WEB] */
+exports.mejoresPartidas = function(req, res) {
     const { usuario_id } = req.params;
 
-    Partidas.find({ usuario_id: usuario_id })
-        .sort({ fecha: -1 })
-        .limit(5)
-        .then(partidas => {
-            res.json({
-                status: "success",
-                message: `Las últimas 5 partidas del usuario ${usuario_id} obtenidas exitosamente`,
-                data: partidas
-            });
-        })
-        .catch(err => {
-            res.status(500).json({
-                status: "error",
-                message: "Error al obtener las últimas partidas del usuario",
-                error: err.message
-            });
+    Partidas.aggregate([
+        { $match: { usuario_id: new mongoose.Types.ObjectId(usuario_id) } },
+        { $sort: { puntuacion: -1 } },
+        { $limit: 5 }
+    ])
+    
+    .then(partidas => {
+        res.json({
+            status: "success",
+            message: `Las 5 mejores partidas del usuario ${usuario_id} obtenidas exitosamente`,
+            data: partidas
         });
+    })
+    .catch(err => {
+        res.status(500).json({
+            status: "error",
+            message: "Error al obtener las mejores partidas del usuario",
+            error: err.message
+        });
+    });
 };
+
 
 /* FUNCIÓN -> RESTAR MONEDAS DE UN USUARIO POR ID [IMPLEMENTADO - JUEGO (TIENDA)]*/
 exports.restarMonedasUsuario = function(req, res) {
