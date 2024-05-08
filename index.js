@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
 app.use(session({
-    secret: 'secreto-para-generar-la-sesion',
+    secret: 'PlayAlmi1234!?!?!?!?!?',
     resave: false,
     saveUninitialized: true
 }));
